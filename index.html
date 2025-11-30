@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IAbot – Édition Ultime</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f8ff;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    #chat {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: white;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+    .message {
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    .user { background: #d1e7ff; text-align: right; }
+    .bot { background: #e8f5e9; }
+    #input-area {
+      display: flex;
+      gap: 10px;
+    }
+    #user-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background: #45a049; }
+    .personality-choice {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>🤖 IAbot – Édition Ultime</h1>
+
+  <div id="personality-section" class="personality-choice">
+    <p>🎨 Choisis une personnalité :</p>
+    <button onclick="setPersonality('drôle')">1. Drôle 😄</button>
+    <button onclick="setPersonality('sérieuse')">2. Sérieuse 🧠</button>
+    <button onclick="setPersonality('geek')">3. Geek 👾</button>
+    <button onclick="setPersonality('bienveillante')">4. Bienveillante 💖</button>
+  </div>
+
+  <div id="chat" class="hidden"></div>
+  <div id="input-area" class="hidden">
+    <input type="text" id="user-input" placeholder="Tape ton message..." />
+    <button onclick="sendMessage()">Envoyer</button>
+  </div>
+
+  <script>
+    // Données du bot (version web simplifiée)
+    const PERSONNALITES = {
+      "drôle": { emoji: "😄", salutations: ["Salut, champion(ne) !", "Yo ! Prêt(e) à rire un coup ?", "Coucou toi ! T’as apporté les pop-corn ?"] },
+      "sérieuse": { emoji: "🧠", salutations: ["Bonjour.", "Salutations.", "Bonjour. En quoi puis-je vous assister ?"] },
+      "geek": { emoji: "👾", salutations: ["Salut, humain(e) ! 👾", "01000010 01101111 01101110 01101010 01101111 01110101 01110010 !", "Hello, fellow coder ! 🐍"] },
+      "bienveillante": { emoji: "💖", salutations: ["Bonjour, douce personne ! 💖", "Coucou ! Je suis si contente de te parler !", "Salut toi ! Tu es précieux(se), tu le sais ?"] }
+    };
+
+    const BLAGUES = [
+      "Pourquoi les plongeurs plongent-ils toujours en arrière ? Parce que sinon ils tombent dans le bateau ! 😄",
+      "Quel est le comble pour un prof de maths ? C’est d’avoir des problèmes dans la vie ! 🤓",
+      "Que dit un zèbre devant une porte ? Z’ouvre ! 🦓"
+    ];
+
+    const CITATIONS = [
+      "« Soyez le changement que vous voulez voir dans le monde. » – Gandhi",
+      "« La seule façon de faire du bon travail est d’aimer ce que vous faites. » – Steve Jobs",
+      "« L’imagination est plus importante que le savoir. » – Albert Einstein"
+    ];
+
+    const SUJETS = {
+      "météo": ["Il fait beau dans mon cœur numérique ! ☀️", "Météo idéale pour coder !"],
+      "école": ["Continue d’apprendre, c’est la clé du futur. 📚"],
+      "amour": ["L’amour, c’est comme un algorithme… parfois compliqué, mais magnifique ! ❤️"],
+      "python": ["Python ? Mon langage préféré ! 🐍"],
+      "robot": ["Je suis un programme, pas un vrai robot… mais merci de penser à moi ! 🤖"]
+    };
+
+    let personnalite = "bienveillante";
+    let nom_utilisateur = null;
+    let chatVisible = false;
+
+    function setPersonality(p) {
+      personnalite = p;
+      document.getElementById("personality-section").classList.add("hidden");
+      document.getElementById("chat").classList.remove("hidden");
+      document.getElementById("input-area").classList.remove("hidden");
+      
+      const emoji = PERSONNALITES[personnalite].emoji;
+      ajouterMessageBot(`Bonjour ! Je suis IAbot (${personnalite}) ${emoji}. Dis-moi ton prénom !`);
+    }
+
+    function ajouterMessage(texte, classe) {
+      const chat = document.getElementById("chat");
+      const div = document.createElement("div");
+      div.classList.add("message", classe);
+      div.textContent = texte;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function ajouterMessageUser(texte) {
+      ajouterMessage(texte, "user");
+    }
+
+    function ajouterMessageBot(texte) {
+      const emoji = PERSONNALITES[personnalite].emoji;
+      ajouterMessage(texte + " " + emoji, "bot");
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("user-input");
+      const message = input.value.trim();
+      if (!message) return;
+
+      ajouterMessageUser(message);
+      input.value = "";
+
+      const reponse = repondre(message);
+      ajouterMessageBot(reponse);
+
+      // Scroll automatique
+      document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+    }
+
+    function repondre(message) {
+      const msg = message.toLowerCase();
+
+      // Heure
+      if (msg.includes("heure")) {
+        const now = new Date();
+        return `Il est ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}. ⏰`;
+      }
+
+      // Date
+      if (msg.includes("date") || msg.includes("jour")) {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        let dateFr = now.toLocaleDateString('fr-FR', options);
+        dateFr = dateFr.charAt(0).toUpperCase() + dateFr.slice(1);
+        return `Aujourd’hui, nous sommes le ${dateFr}.`;
+      }
+
+      // Prénom
+      if (msg.includes("je m'appelle") || msg.includes("mon nom est") || msg.includes("je suis")) {
+        const mots = msg.split(' ');
+        let prenom = null;
+        for (let i = 0; i < mots.length; i++) {
+          if (["appelle", "suis", "nom"].includes(mots[i]) && mots[i + 1]) {
+            prenom = mots[i + 1].charAt(0).toUpperCase() + mots[i + 1].slice(1);
+            if (/^[a-zA-Z]{2,15}$/.test(prenom)) {
+              nom_utilisateur = prenom;
+              return `Enchanté(e), ${prenom} ! Je me souviendrai de toi.`;
+            }
+          }
+        }
+        return "Je n’ai pas compris ton prénom… Peux-tu réessayer ? (ex: 'Je m'appelle Léa')";
+      }
+
+      // Blagues
+      if (msg.includes("blague") || msg.includes("drôle") || msg.includes("rire")) {
+        return BLAGUES[Math.floor(Math.random() * BLAGUES.length)];
+      }
+
+      // Citations
+      if (msg.includes("citation") || msg.includes("sagesse") || msg.includes("motivation")) {
+        return CITATIONS[Math.floor(Math.random() * CITATIONS.length)];
+      }
+
+      // Sujets
+      for (const sujet in SUJETS) {
+        if (msg.includes(sujet)) {
+          return SUJETS[sujet][Math.floor(Math.random() * SUJETS[sujet].length)];
+        }
+      }
+
+      // Calculs simples (ex: "5 + 3")
+      const calcRegex = /(\d+)\s*([+\-*/])\s*(\d+)/;
+      const calcMatch = msg.match(calcRegex);
+      if (calcMatch) {
+        const a = parseFloat(calcMatch[1]);
+        const op = calcMatch[2];
+        const b = parseFloat(calcMatch[3]);
+        let result;
+        switch(op) {
+          case '+': result = a + b; break;
+          case '-': result = a - b; break;
+          case '*': result = a * b; break;
+          case '/': 
+            if (b === 0) return "On ne divise pas par zéro ! 😅";
+            result = Math.round((a / b) * 100) / 100;
+            break;
+          default: return "Opération non reconnue.";
+        }
+        return `${a} ${op} ${b} = ${result}`;
+      }
+
+      // Salutations
+      if (msg.includes("bonjour") || msg.includes("salut") || msg.includes("hello") || msg.includes("coucou")) {
+        const salut = PERSONNALITES[personnalite].salutations[Math.floor(Math.random() * PERSONNALITES[personnalite].salutations.length)];
+        if (nom_utilisateur) {
+          return `${salut} Bonne journée, ${nom_utilisateur} !`;
+        } else {
+          return `${salut} Comment tu t’appelles ?`;
+        }
+      }
+
+      // Au revoir
+      if (msg.includes("au revoir") || msg.includes("bye") || msg.includes("quit")) {
+        const auRevoir = ["À plus !", "Bye bye !", "À la prochaine !"];
+        return auRevoir[Math.floor(Math.random() * auRevoir.length)] + (nom_utilisateur ? ` ${nom_utilisateur} !` : " !");
+      }
+
+      // Aide
+      if (msg.includes("aide") || msg.includes("fonctionne")) {
+        return "Je comprends : ton prénom, l’heure, la date, les blagues, les citations, les sujets (météo, école…), les calculs (ex: 5+3).";
+      }
+
+      // Réponse par défaut
+      const defaut = [
+        "Hmm… intéressant ! Mais je suis en apprentissage. Parle-moi d’autre chose ?",
+        "Je réfléchis… ⏳ Essaie une question plus simple !",
+        "Parle-moi de blagues, de Python, ou demande l’heure ! 😊"
+      ];
+      return defaut[Math.floor(Math.random() * defaut.length)];
+    }
+
+    // Appuyer sur Entrée pour envoyer
+    document.getElementById("user-input").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
